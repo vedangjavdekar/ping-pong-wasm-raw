@@ -244,6 +244,7 @@ void init_paddle(Entity *entity, Vector2f position, Vector2f size) {
 
 void draw_paddle(Entity *entity, u32 color, f32 alpha) {
   CHECK(entity)
+
   Vector2f lerp_pos;
   if (v2f_eq(entity->curr_position, entity->target_position)) {
     lerp_pos = entity->target_position;
@@ -251,18 +252,10 @@ void draw_paddle(Entity *entity, u32 color, f32 alpha) {
     lerp_pos = v2f_lerp(entity->curr_position, entity->target_position, alpha);
   }
 
-  // Vector2f lerp_pos = entity->target_position;
   Vector2f origin =
       v2f_sub(lerp_pos, v2f_scale(entity->collider.data.rectangle.size, 0.5f));
   Vector2i origin_i = v2f_to_v2i(origin);
   Vector2i size_i = v2f_to_v2i(entity->collider.data.rectangle.size);
-
-  /*
-  LOGF("[%p] curr: {%f, %f} target: {%f, %f} lerped: {%f, %f}", entity,
-       entity->curr_position.x, entity->curr_position.y,
-       entity->target_position.x, entity->target_position.y, lerp_pos.x,
-       lerp_pos.y);
-  */
 
   platform_fill_rect(origin_i.x, origin_i.y, size_i.x, size_i.y, color);
 }
