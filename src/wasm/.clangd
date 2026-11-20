@@ -1,0 +1,2 @@
+CompileFlags:
+  Add: [-isystem, /path/to/emsdk/upstream/emscripten/cache/sysroot/include]
