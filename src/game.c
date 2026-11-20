@@ -58,51 +58,72 @@ typedef struct motion2D {
 } motion2D;
 
 // :Math
-typedef struct Vector2f {
+typedef struct FVec2 {
   f32 x;
   f32 y;
-} Vector2f;
+} FVec2;
 
-typedef struct Vector2i {
+typedef struct IVec2 {
   i32 x;
   i32 y;
-} Vector2i;
+} IVec2;
 
-#define V2F_ZERO ((Vector2f){0.0f, 0.0f})
-#define V2I_ZERO ((Vector2f){0, 0})
+
+#define FV2_ZERO ((FVec2){0.0f, 0.0f})
+#define IV2_ZERO ((FVec2){0, 0})
 
 // A = B
-b32 v2f_eq(Vector2f a, Vector2f b) { return a.x == b.x && a.y == b.y; }
+b32 fv2_eq(FVec2 a, FVec2 b) { return a.x == b.x && a.y == b.y; }
 
 // A + B
-Vector2f v2f_add(Vector2f a, Vector2f b) {
-  return (Vector2f){.x = a.x + b.x, .y = a.y + b.y};
+FVec2 fv2_add(FVec2 a, FVec2 b) {
+  return (FVec2){.x = a.x + b.x, .y = a.y + b.y};
 }
 
 // A - B
-Vector2f v2f_sub(Vector2f a, Vector2f b) {
-  return (Vector2f){.x = a.x - b.x, .y = a.y - b.y};
+FVec2 fv2_sub(FVec2 a, FVec2 b) {
+  return (FVec2){.x = a.x - b.x, .y = a.y - b.y};
 }
 
 // Component wise multiply by constant
-Vector2f v2f_scale(Vector2f a, f32 scale) {
-  return (Vector2f){.x = scale * a.x, .y = scale * a.y};
+FVec2 fv2_scale(FVec2 a, f32 scale) {
+  return (FVec2){.x = scale * a.x, .y = scale * a.y};
 }
 
 // Lerp
-Vector2f v2f_lerp(Vector2f a, Vector2f b, f32 t) {
-  return (Vector2f){
+FVec2 fv2_lerp(FVec2 a, FVec2 b, f32 t) {
+  return (FVec2){
       .x = a.x * t + b.x * (1.0f - t),
       .y = a.y * t + b.y * (1.0f - t),
   };
 }
 
 // Dot Product
-f32 v2f_dot(Vector2f a, Vector2f b) { return (a.x * b.x) + (a.y * b.y); }
+f32 fv2_dot(FVec2 a, FVec2 b) { return (a.x * b.x) + (a.y * b.y); }
 
 // Floored conversion from float vector to int vector
-Vector2i v2f_to_v2i(Vector2f a) {
-  return (Vector2i){.x = (i32)a.x, .y = (i32)a.y};
+IVec2 fv2_to_iv2(FVec2 a) {
+  return (IVec2){.x = (i32)a.x, .y = (i32)a.y};
+}
+
+typedef struct FRect {
+  f32 x;
+  f32 y;
+  f32 w;
+  f32 h;
+} FRect;
+
+typedef struct IRect {
+  i32 x;
+  i32 y;
+  i32 w;
+  i32 h;
+} IRect;
+
+u8 point_in_frect(FVec2 point, FRect rect) {
+}
+
+u8 point_in_irect(IVec2 point, IRect rect) {
 }
 
 // :Inputs
@@ -126,10 +147,10 @@ typedef struct CircleCollider {
 
 typedef union RectangleCollider {
   struct {
-    f32 length;
     f32 width;
+    f32 height;
   };
-  Vector2f size;
+  FVec2 size;
 } RectangleCollider;
 
 typedef struct Collider {
@@ -152,9 +173,9 @@ typedef enum EntityType {
 
 typedef struct Entity {
   EntityType type;
-  Vector2f curr_position;
-  Vector2f target_position;
-  Vector2f velocity;
+  FVec2 curr_position;
+  FVec2 target_position;
+  FVec2 velocity;
   Collider collider;
 } Entity;
 
@@ -166,7 +187,7 @@ typedef struct Entity {
 
 typedef struct GameState {
   // Field Dimentions
-  Vector2i field_dim;
+  IVec2 field_dim;
 
   // Inputs
   PlayerInput inputs[MAX_PLAYERS];
@@ -216,12 +237,12 @@ void input_handle_key(PlayerInput *player_input, u8 key_code, u8 is_pressed) {
 }
 
 // :Collider
-void init_rect_collider(Collider *collider, Vector2f size) {
+void init_rect_collider(Collider *collider, FVec2 size) {
   CHECK(collider)
 
   collider->shape = RECT;
   collider->data.rectangle =
-      (RectangleCollider){.length = size.x, .width = size.y};
+      (RectangleCollider){.width = size.x, .height = size.y};
 }
 
 void init_circle_collider(Collider *collider, f32 radius) {
@@ -232,30 +253,30 @@ void init_circle_collider(Collider *collider, f32 radius) {
 }
 
 // :Paddles
-void init_paddle(Entity *entity, Vector2f position, Vector2f size) {
+void init_paddle(Entity *entity, FVec2 position, FVec2 size) {
   CHECK(entity)
 
   entity->type = ET_PADDLE;
   entity->curr_position = position;
   entity->target_position = position;
-  entity->velocity = (Vector2f){0.0f, 0.0f};
+  entity->velocity = (FVec2){0.0f, 0.0f};
   init_rect_collider(&entity->collider, size);
 }
 
 void draw_paddle(Entity *entity, u32 color, f32 alpha) {
   CHECK(entity)
 
-  Vector2f lerp_pos;
-  if (v2f_eq(entity->curr_position, entity->target_position)) {
+  FVec2 lerp_pos;
+  if (fv2_eq(entity->curr_position, entity->target_position)) {
     lerp_pos = entity->target_position;
   } else {
-    lerp_pos = v2f_lerp(entity->curr_position, entity->target_position, alpha);
+    lerp_pos = fv2_lerp(entity->curr_position, entity->target_position, alpha);
   }
 
-  Vector2f origin =
-      v2f_sub(lerp_pos, v2f_scale(entity->collider.data.rectangle.size, 0.5f));
-  Vector2i origin_i = v2f_to_v2i(origin);
-  Vector2i size_i = v2f_to_v2i(entity->collider.data.rectangle.size);
+  FVec2 origin =
+      fv2_sub(lerp_pos, fv2_scale(entity->collider.data.rectangle.size, 0.5f));
+  IVec2 origin_i = fv2_to_iv2(origin);
+  IVec2 size_i = fv2_to_iv2(entity->collider.data.rectangle.size);
 
   platform_fill_rect(origin_i.x, origin_i.y, size_i.x, size_i.y, color);
 }
@@ -280,7 +301,7 @@ void update_paddle(Entity *entity, PlayerInput *player_input, f32 dt) {
   }
 }
 
-void init_line(Entity *entity, Vector2f start, Vector2f end) {
+void init_line(Entity *entity, FVec2 start, FVec2 end) {
   entity->type = ET_LINE;
   entity->curr_position = start;
   entity->target_position = end;
@@ -292,8 +313,8 @@ void init_line(Entity *entity, Vector2f start, Vector2f end) {
 
 void draw_line(Entity *entity, u32 color, f32 alpha) {
 
-  Vector2i point_1 = v2f_to_v2i(entity->curr_position);
-  Vector2i point_2 = v2f_to_v2i(entity->target_position);
+  IVec2 point_1 = fv2_to_iv2(entity->curr_position);
+  IVec2 point_2 = fv2_to_iv2(entity->target_position);
   platform_stroke_line(point_1.x, point_1.y, point_2.x, point_2.y, RGBA(200, 200, 200,155));
 }
 
@@ -561,24 +582,24 @@ void start_game(i32 canvas_width, i32 canvas_height) {
 static void setup_level() {
   game_state.border =
       (Entity){.type = ET_LINE,
-               .curr_position = V2F_ZERO,
-               .target_position = V2F_ZERO,
-               .velocity = V2F_ZERO,
+               .curr_position = FV2_ZERO,
+               .target_position = FV2_ZERO,
+               .velocity = FV2_ZERO,
                .collider = (Collider){.shape = RECT,
                                       .data.rectangle = (RectangleCollider){
-                                          .length = game_state.field_dim.x,
-                                          .width = game_state.field_dim.y}}};
+                                          .width = game_state.field_dim.x,
+                                          .height = game_state.field_dim.y}}};
 
   init_line(&game_state.center_line,
-            (Vector2f){0.5f * game_state.field_dim.x, 0.0f},
-            (Vector2f){0.5f * game_state.field_dim.x, game_state.field_dim.y});
+            (FVec2){0.5f * game_state.field_dim.x, 0.0f},
+            (FVec2){0.5f * game_state.field_dim.x, game_state.field_dim.y});
 }
 
 static void draw_level(f32 alpha) {
 
   (void)alpha;
-  Vector2i origin_i = v2f_to_v2i(game_state.border.curr_position);
-  Vector2i size_i = v2f_to_v2i(game_state.border.collider.data.rectangle.size);
+  IVec2 origin_i = fv2_to_iv2(game_state.border.curr_position);
+  IVec2 size_i = fv2_to_iv2(game_state.border.collider.data.rectangle.size);
   platform_stroke_rect(origin_i.x, origin_i.y, size_i.x, size_i.y, WHITE);
 
   draw_line(&game_state.center_line, WHITE, 0.0);
@@ -627,7 +648,7 @@ void game_keyup(u8 key_code) {
 }
 
 void game_init(i32 width, i32 height) {
-  game_state.field_dim = (Vector2i){.x = width, .y = height};
+  game_state.field_dim = (IVec2){.x = width, .y = height};
 
   setup_input_mappings();
 
@@ -635,16 +656,16 @@ void game_init(i32 width, i32 height) {
 
   // TODO: Call inits for all types of entities
   init_paddle(&game_state.player_paddles[PLAYER_1_IDX],
-              (Vector2f){PADDLE_WIDTH_OFFSET_PERC * (f32)game_state.field_dim.x,
+              (FVec2){PADDLE_WIDTH_OFFSET_PERC * (f32)game_state.field_dim.x,
                          (f32)game_state.field_dim.y * 0.5f},
-              (Vector2f){PADDLE_WIDTH_PERC * (f32)game_state.field_dim.x,
+              (FVec2){PADDLE_WIDTH_PERC * (f32)game_state.field_dim.x,
                          PADDLE_HEIGHT_PERC * (f32)game_state.field_dim.y});
 
   init_paddle(&game_state.player_paddles[PLAYER_2_IDX],
-              (Vector2f){(1.0f - PADDLE_WIDTH_OFFSET_PERC) *
+              (FVec2){(1.0f - PADDLE_WIDTH_OFFSET_PERC) *
                              (f32)game_state.field_dim.x,
                          (f32)game_state.field_dim.y * 0.5f},
-              (Vector2f){PADDLE_WIDTH_PERC * (f32)game_state.field_dim.x,
+              (FVec2){PADDLE_WIDTH_PERC * (f32)game_state.field_dim.x,
                          PADDLE_HEIGHT_PERC * (f32)game_state.field_dim.y});
 }
 

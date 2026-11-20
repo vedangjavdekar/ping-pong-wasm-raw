@@ -1,17 +1,5 @@
 ## Prerequisites
-emsdk is installed and environment is activated. Instructions can be found [here](https://emscripten.org/docs/getting_started/downloads.html)
-Make sure that the following commands are run in a terminal that has the emscripten environment activated otherwise you will see 
-
-## Checking it out
-```sh
-# ui
-pnpm install
-pnpm dev
-
-# wasm build
-cd src/wasm
-em++ main.cpp -o main.js -s "EXPORTED_FUNCTIONS=['_init','_player1_input','_player2_input']" -s "EXPORTED_RUNTIME_METHODS=['cwrap']" -s ASYNCIFY -s MODULARIZE=1 -s EXPORT_ES6=1 -O2
-```
+Make sure you have Clang installed.
 
 ## Windows
 ```bat
@@ -23,6 +11,13 @@ run.bat
 ```
 
 ## todo checklist
+
+### Planned
+- Plugin system
+- Zig plugins that drives the ball upgrades
+- browser detects and loads the plugins 
+- shared memory buffer that holds the game state. Upon game load, the main game.wasm creates the GameState on the shared buffer.
+- The rest of the plugins use it and make updates
 
 ### performance / tech
 - shared memory buffer between cpp and js - reduce heap copying

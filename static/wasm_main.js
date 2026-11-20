@@ -75,10 +75,8 @@ function platform_fill_circle(x, y, r, color) {
 	ctx.fill();
 }
 
-const FRAME_RATE_HZ = 60;
-const PHYSICS_RATE_HZ = 50;
+const PHYSICS_RATE_HZ = 60;
 const FIXED_DT = 1.0 / PHYSICS_RATE_HZ;
-const MAX_DT = 1.0 / FRAME_RATE_HZ;
 
 let prev_time;
 let accumulator = 0;
@@ -89,7 +87,7 @@ function loop(timestamp) {
 		prev_time = timestamp;
 	}
 
-	const dt = Math.min(0.001 * (timestamp - prev_time), MAX_DT);
+	const dt = 0.001 * (timestamp - prev_time);
 	prev_time = timestamp;
 
 	accumulator += dt;
